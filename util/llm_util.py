@@ -2,9 +2,9 @@ import os
 from dotenv import load_dotenv
 from groq import Groq
 import logging
-from transformers import LlamaTokenizer
+# from transformers import LlamaTokenizer
 from util.common_util import CommonUtil
-
+import tiktoken
 # 设置日志记录
 logging.basicConfig(
     level=logging.INFO,
@@ -13,7 +13,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 util = CommonUtil()
 # 初始化LLaMA模型的Tokenizer
-tokenizer = LlamaTokenizer.from_pretrained("huggyllama/llama-65b")
+# tokenizer = LlamaTokenizer.from_pretrained("huggyllama/llama-65b")
+encoding = tiktoken.get_encoding("cl100k_base")
 
 class LLMUtil:
     def __init__(self):
@@ -67,11 +68,16 @@ class LLMUtil:
 
         logger.info("LLM正在处理")
         try:
-            tokens = tokenizer.encode(user_prompt)
+            tokens = encoding.encode(user_prompt)
             if len(tokens) > self.groq_max_tokens:
                 logger.info(f"用户输入长度超过{self.groq_max_tokens}，进行截取")
                 truncated_tokens = tokens[:self.groq_max_tokens]
-                user_prompt = tokenizer.decode(truncated_tokens)
+                user_prompt = encoding.decode(truncated_tokens)
+            # tokens = tokenizer.encode(user_prompt)
+            # if len(tokens) > self.groq_max_tokens:
+            #     logger.info(f"用户输入长度超过{self.groq_max_tokens}，进行截取")
+            #     truncated_tokens = tokens[:self.groq_max_tokens]
+            #     user_prompt = tokenizer.decode(truncated_tokens)
 
             chat_completion = self.client.chat.completions.create(
                 messages=[
