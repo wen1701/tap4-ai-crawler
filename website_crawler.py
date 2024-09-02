@@ -2,6 +2,8 @@ from bs4 import BeautifulSoup
 import logging
 import time
 import random
+import requests
+import os
 from pyppeteer import launch
 
 from util.common_util import CommonUtil
@@ -48,7 +50,10 @@ class WebsitCrawler:
                 url = 'https://' + url
 
             if self.browser is None:
-                self.browser = await launch(headless=True,
+                self.browser = await launch(
+                    
+                    executablePath='C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
+                    headless=True,
                                             ignoreDefaultArgs=["--enable-automation"],
                                             ignoreHTTPSErrors=True,
                                             args=['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu',
@@ -108,11 +113,19 @@ class WebsitCrawler:
                 'width': dimensions['width'],
                 'height': dimensions['height']
             }})
+            screenshot_key = f"tools/{name}/screenshot.png"
+            thumbnail_key = f"tools/{name}/screenshot-thumbnail.png"
+            icon_key = f"tools/{name}/favicon.ico"
             # 上传图片，返回图片地址
-            screenshot_key = oss.upload_file_to_r2(screenshot_path, image_key)
+            screenshot_key = oss.upload_file_to_r2(screenshot_path, screenshot_key)
+            thumbnail_key = oss.generate_thumbnail_image(screenshot_path, thumbnail_key)
+            icon = requests.get(f'{url}/favicon.ico')
+            icon_key = oss.upload_streams_to_r2((icon.content), icon_key)
 
+            if os.path.exists(screenshot_path):
+                os.remove(screenshot_path)
             # 生成缩略图
-            thumnbail_key = oss.generate_thumbnail_image(url, image_key)
+            #thumnbail_key = oss.generate_thumbnail_image(url, image_key)
 
             # 抓取整个网页内容
             content = soup.get_text()
@@ -145,7 +158,8 @@ class WebsitCrawler:
                 'description': description,
                 'detail': detail,
                 'screenshot_data': screenshot_key,
-                'screenshot_thumbnail_data': thumnbail_key,
+                'screenshot_thumbnail_data': thumbnail_key,
+                'icon_data': icon_key,
                 'tags': processed_tags,
                 'languages': processed_languages,
             }
@@ -157,3 +171,5 @@ class WebsitCrawler:
             execution_time = int(time.time()) - start_time
             # 输出程序执行时间
             logger.info("处理" + url + "用时：" + str(execution_time) + " 秒")
+
+    
