@@ -1,6 +1,6 @@
 import os
 from dotenv import load_dotenv
-from groq import Groq
+from openai import OpenAI
 import logging
 # from transformers import LlamaTokenizer
 from util.common_util import CommonUtil
@@ -26,8 +26,12 @@ class LLMUtil:
         self.language_sys_prompt = os.getenv('LANGUAGE_SYS_PROMPT')
         self.groq_model = os.getenv('GROQ_MODEL')
         self.groq_max_tokens = int(os.getenv('GROQ_MAX_TOKENS', 5000))
-        self.client = Groq(
-            api_key=self.groq_api_key
+        self.openai_base_url = os.getenv('OPENAI_BASE_URL')
+        self.openai_api_key = os.getenv('OPENAI_API_kEY')
+        self.openai_model = os.getenv("OPENAI_MODEL")
+        self.client = OpenAI(
+            base_url=self.openai_base_url,
+            api_key=self.openai_api_key
         )
 
     def process_detail(self, user_prompt):
@@ -90,7 +94,7 @@ class LLMUtil:
                         "content": user_prompt,
                     }
                 ],
-                model=self.groq_model,
+                model=self.openai_model,
                 temperature=0.2,
             )
             if chat_completion.choices[0] and chat_completion.choices[0].message:

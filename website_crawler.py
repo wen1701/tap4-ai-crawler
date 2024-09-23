@@ -37,7 +37,7 @@ global_agent_headers = [
 
 class WebsitCrawler:
     def __init__(self):
-        self.browser = None
+        pass
 
     # 爬取指定URL网页内容
     async def scrape_website(self, url, tags, languages):
@@ -49,18 +49,16 @@ class WebsitCrawler:
             if not url.startswith('http://') and not url.startswith('https://'):
                 url = 'https://' + url
 
-            if self.browser is None:
-                self.browser = await launch(
-                    
+            browser = await launch(
                     executablePath='C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe',
-                    headless=True,
+                    headless=False,
                                             ignoreDefaultArgs=["--enable-automation"],
                                             ignoreHTTPSErrors=True,
                                             args=['--no-sandbox', '--disable-dev-shm-usage', '--disable-gpu',
                                                   '--disable-software-rasterizer', '--disable-setuid-sandbox'],
                                             handleSIGINT=False, handleSIGTERM=False, handleSIGHUP=False)
 
-            page = await self.browser.newPage()
+            page = await browser.newPage()
             # 设置用户代理
             await page.setUserAgent(random.choice(global_agent_headers))
 
@@ -93,7 +91,7 @@ class WebsitCrawler:
                 meta_description = soup.find('meta', attrs={'property': 'og:description'})
                 description = meta_description['content'].strip() if meta_description else ''
 
-            logger.info(f"url:{url}, title:{title},description:{description}")
+            logger.info(f"url:{url}, title:{title}, description:{description}")
 
             # 生成网站截图
             image_key = oss.get_default_file_key(url)
